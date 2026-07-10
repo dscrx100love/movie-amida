@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>映画決定あみだくじ</title>
+  <style>
+    :root {
+      --bg: #07080d;
+      --panel: rgba(18, 20, 33, 0.82);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text: #f7f4ea;
+      --muted: #a9a8b7;
+      --gold: #ffd36e;
+      --red: #ff496d;
+      --cyan: #56e3ff;
+      --violet: #a875ff;
+      --green: #7dff9d;
+      --line: rgba(255, 255, 255, 0.42);
+      --line-soft: rgba(255, 255, 255, 0.16);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(168, 117, 255, 0.2), transparent 30%),
+        radial-gradient(circle at 85% 12%, rgba(255, 73, 109, 0.18), transparent 32%),
+        linear-gradient(180deg, #090a12 0%, #05060a 58%, #020206 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 82%);
+    }
+
+    .stage {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 34px 0 48px;
+      position: relative;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--gold);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 8px 0 8px;
+      font-size: clamp(34px, 6vw, 76px);
+      line-height: 0.96;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .lead {
+      max-width: 740px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .marquee {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid rgba(255, 211, 110, 0.32);
+      color: var(--gold);
+      background: rgba(255, 211, 110, 0.08);
+      box-shadow: 0 0 28px rgba(255, 211, 110, 0.12);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 18px var(--red);
+    }
+
+    .control-panel {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 14px;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button {
+      height: 46px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: var(--text);
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0 12px;
+      background: rgba(0, 0, 0, 0.32);
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(86, 227, 255, 0.16);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: end;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 900;
+      letter-spacing: 0;
+      transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .btn-generate {
+      background: linear-gradient(135deg, rgba(86, 227, 255, 0.96), rgba(168, 117, 255, 0.96));
+      color: #071019;
+      box-shadow: 0 12px 34px rgba(86, 227, 255, 0.16);
+    }
+
+    .btn-start {
+      border-color: rgba(255, 211, 110, 0.42);
+      background: linear-gradient(135deg, #ffd36e, #ff496d);
+      color: #1c070e;
+      box-shadow: 0 12px 42px rgba(255, 73, 109, 0.22), 0 0 28px rgba(255, 211, 110, 0.14);
+    }
+
+    .board-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+        rgba(8, 10, 18, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .board-wrap::before,
+    .board-wrap::after {
+      content: "";
+      position: absolute;
+      left: -12%;
+      width: 124%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+      pointer-events: none;
+    }
+
+    .board-wrap::before { top: 62px; }
+    .board-wrap::after { bottom: 146px; }
+
+    .start-labels {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 18px 34px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .start-pill {
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.045);
+      font-weight: 900;
+      transition: 200ms ease;
+    }
+
+    .start-pill.active {
+      color: #071019;
+      background: linear-gradient(135deg, var(--cyan), var(--gold));
+      box-shadow: 0 0 30px rgba(86, 227, 255, 0.28);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: min(58vw, 520px);
+      min-height: 360px;
+      max-height: 560px;
+    }
+
+    .goals {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 0 18px 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .movie-card {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      transform: translateZ(0);
+      transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+    }
+
+    .movie-card::after {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(255,255,255,0.65), transparent 34%);
+      transform: scale(0.4);
+      transition: 360ms ease;
+      pointer-events: none;
+    }
+
+    .movie-card.winner {
+      transform: translateY(-8px) scale(1.03);
+      border-color: rgba(255, 211, 110, 0.9);
+      box-shadow: 0 0 34px rgba(255, 211, 110, 0.34), 0 20px 60px rgba(0, 0, 0, 0.34);
+    }
+
+    .movie-card.winner::after {
+      opacity: 1;
+      transform: scale(1.3);
+    }
+
+    .poster {
+      width: 100%;
+      aspect-ratio: 5 / 7;
+      object-fit: cover;
+      display: block;
+    }
+
+    .movie-title {
+      min-height: 52px;
+      display: grid;
+      place-items: center;
+      padding: 8px 7px 10px;
+      text-align: center;
+      font-size: clamp(13px, 1.7vw, 18px);
+      font-weight: 950;
+    }
+
+    .result-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(2, 3, 8, 0.78);
+      backdrop-filter: blur(8px);
+    }
+
+    .result-layer.show {
+      display: grid;
+      animation: fadeIn 240ms ease both;
+    }
+
+    .result-card {
+      position: relative;
+      width: min(520px, 90vw);
+      overflow: hidden;
+      border: 1px solid rgba(255, 211, 110, 0.52);
+      border-radius: 8px;
+      background: #0d0e16;
+      box-shadow: 0 0 80px rgba(255, 211, 110, 0.22), 0 32px 120px rgba(0,0,0,0.68);
+      animation: resultPop 620ms cubic-bezier(.2, 1.2, .2, 1) both;
+    }
+
+    .result-card::before {
+      content: "";
+      position: absolute;
+      inset: -50% -70%;
+      background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.7) 48%, transparent 58%);
+      transform: translateX(-48%) rotate(12deg);
+      animation: shine 900ms 220ms ease-out both;
+      pointer-events: none;
+    }
+
+    .result-poster {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      display: block;
+      filter: saturate(1.1) contrast(1.04);
+    }
+
+    .result-info {
+      padding: 18px 20px 20px;
+      text-align: center;
+    }
+
+    .result-info p {
+      margin: 0 0 7px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+    }
+
+    .result-info h2 {
+      margin: 0;
+      font-size: clamp(30px, 6vw, 54px);
+      line-height: 1;
+    }
+
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      padding: 0 20px 22px;
+    }
+
+    .btn-close {
+      min-width: 170px;
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.24);
+      color: var(--text);
+    }
+
+    .spark {
+      position: fixed;
+      z-index: 25;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      pointer-events: none;
+      background: var(--gold);
+      box-shadow: 0 0 16px currentColor;
+      animation: sparkFly 900ms ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes resultPop {
+      0% { transform: scale(0.72); opacity: 0; }
+      60% { transform: scale(1.045); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shine {
+      from { transform: translateX(-48%) rotate(12deg); }
+      to { transform: translateX(48%) rotate(12deg); }
+    }
+
+    @keyframes sparkFly {
+      to {
+        transform: translate(var(--dx), var(--dy)) scale(0);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .hero,
+      .control-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .marquee {
+        justify-self: start;
+      }
+
+      .button-row {
+        grid-template-columns: 1fr;
+      }
+
+      .start-labels {
+        padding-inline: 14px;
+      }
+
+      .goals {
+        gap: 8px;
+        padding-inline: 10px;
+      }
+
+      .movie-title {
+        min-height: 56px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <header class="hero">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> Tonight's Lottery</span>
+        <h1>映画決定<br>あみだくじ</h1>
+        <p class="lead">4つの候補から、今日観る1本をネオンの軌跡で決定します。</p>
+      </div>
+      <div class="marquee">SCREEN 04 / READY</div>
+    </header>
+
+    <section class="control-panel" aria-label="あみだくじ操作パネル">
+      <label>
+        横線の本数
+        <input id="lineCount" type="number" min="5" max="40" value="18" inputmode="numeric">
+      </label>
+      <label>
+        スタート位置
+        <select id="startLane">
+          <option value="0">1番</option>
+          <option value="1">2番</option>
+          <option value="2">3番</option>
+          <option value="3">4番</option>
+        </select>
+      </label>
+      <div class="button-row">
+        <button id="generateBtn" class="btn-generate" type="button">あみだ生成</button>
+        <button id="startBtn" class="btn-start" type="button">スタート！</button>
+      </div>
+      <label>
+        抽選状態
+        <input id="statusText" type="text" value="上映前" readonly>
+      </label>
+    </section>
+
+    <section class="board-wrap">
+      <div class="start-labels" id="startLabels" aria-hidden="true"></div>
+      <canvas id="amidaCanvas" aria-label="映画決定あみだくじ"></canvas>
+      <div class="goals" id="goals"></div>
+    </section>
+  </main>
+
+  <div class="result-layer" id="resultLayer" role="dialog" aria-modal="true" aria-label="抽選結果">
+    <div class="result-card">
+      <img id="resultPoster" class="result-poster" alt="">
+      <div class="result-info">
+        <p>TONIGHT'S MOVIE</p>
+        <h2 id="resultTitle"></h2>
+      </div>
+      <div class="result-actions">
+        <button id="closeResult" class="btn-close" type="button">戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const movies = [
+      {
+        title: "ボディビルダー",
+        colors: ["#f7c46c", "#b13c2d", "#29110d"],
+        motif: "BODY"
+      },
+      {
+        title: "ウェポンズ",
+        colors: ["#6ee7ff", "#243d7e", "#080b15"],
+        motif: "WEAPONS"
+      },
+      {
+        title: "ザ・マミー",
+        colors: ["#e4c27d", "#7b4d2b", "#120b08"],
+        motif: "MUMMY"
+      },
+      {
+        title: "ノーバディ2",
+        colors: ["#f65b76", "#3b2d72", "#090912"],
+        motif: "NOBODY 2"
+      }
+    ];
+
+    const canvas = document.getElementById("amidaCanvas");
+    const ctx = canvas.getContext("2d");
+    const lineCountInput = document.getElementById("lineCount");
+    const startLaneSelect = document.getElementById("startLane");
+    const generateBtn = document.getElementById("generateBtn");
+    const startBtn = document.getElementById("startBtn");
+    const statusText = document.getElementById("statusText");
+    const goals = document.getElementById("goals");
+    const startLabels = document.getElementById("startLabels");
+    const resultLayer = document.getElementById("resultLayer");
+    const resultPoster = document.getElementById("resultPoster");
+    const resultTitle = document.getElementById("resultTitle");
+    const closeResult = document.getElementById("closeResult");
+
+    let rungs = [];
+    let laneXs = [];
+    let geometry = null;
+    let currentWinner = null;
+    let animating = false;
+
+    function posterSvg(movie, index, wide = false) {
+      const [a, b, c] = movie.colors;
+      const w = wide ? 900 : 500;
+      const h = wide ? 560 : 700;
+      const title = escapeXml(movie.title);
+      const motif = escapeXml(movie.motif);
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="${a}"/>
+              <stop offset="0.48" stop-color="${b}"/>
+              <stop offset="1" stop-color="${c}"/>
+            </linearGradient>
+            <radialGradient id="spot" cx="50%" cy="30%" r="60%">
+              <stop offset="0" stop-color="rgba(255,255,255,0.58)"/>
+              <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+            </radialGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="5" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#g)"/>
+          <rect width="100%" height="100%" fill="url(#spot)" opacity="0.75"/>
+          <g opacity="0.22">
+            <circle cx="${w * 0.16}" cy="${h * 0.2}" r="${w * 0.15}" fill="none" stroke="white" stroke-width="6"/>
+            <circle cx="${w * 0.84}" cy="${h * 0.7}" r="${w * 0.22}" fill="none" stroke="white" stroke-width="7"/>
+            <path d="M0 ${h * 0.76} C ${w * 0.22} ${h * 0.58}, ${w * 0.54} ${h * 0.92}, ${w} ${h * 0.56}" fill="none" stroke="white" stroke-width="8"/>
+          </g>
+          <rect x="${w * 0.08}" y="${h * 0.09}" width="${w * 0.84}" height="${h * 0.78}" rx="16" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.32)"/>
+          <text x="50%" y="${h * 0.18}" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="${wide ? 48 : 34}" font-weight="900" filter="url(#glow)">MOVIE ${index + 1}</text>
+          <text x="50%" y="50%" text-anchor="middle" fill="white" font-family="Arial Black, Arial, sans-serif" font-size="${wide ? 70 : 48}" font-weight="900" filter="url(#glow)">${motif}</text>
+          <text x="50%" y="${h * 0.76}" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="${wide ? 44 : 34}" font-weight="900">${title}</text>
+          <rect x="0" y="${h - 88}" width="${w}" height="88" fill="rgba(0,0,0,0.72)"/>
+          <text x="50%" y="${h - 32}" text-anchor="middle" fill="${a}" font-family="Arial, sans-serif" font-size="${wide ? 34 : 28}" font-weight="900">PLACEHOLDER PACKAGE</text>
+        </svg>
+      `;
+      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+    }
+
+    function escapeXml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function setupCards() {
+      startLabels.innerHTML = "";
+      goals.innerHTML = "";
+      movies.forEach((movie, index) => {
+        const pill = document.createElement("div");
+        pill.className = "start-pill";
+        pill.textContent = `${index + 1}番`;
+        startLabels.appendChild(pill);
+
+        const card = document.createElement("article");
+        card.className = "movie-card";
+        card.dataset.index = String(index);
+
+        const img = document.createElement("img");
+        img.className = "poster";
+        img.src = posterSvg(movie, index);
+        img.alt = `${movie.title}のパッケージ画像`;
+
+        const title = document.createElement("div");
+        title.className = "movie-title";
+        title.textContent = movie.title;
+
+        card.append(img, title);
+        goals.appendChild(card);
+      });
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      geometry = getGeometry(rect.width, rect.height);
+      drawBoard();
+    }
+
+    function getGeometry(width, height) {
+      const top = 32;
+      const bottom = height - 28;
+      const left = Math.max(56, width * 0.09);
+      const right = width - left;
+      const xs = [];
+      for (let i = 0; i < 4; i += 1) {
+        xs.push(left + ((right - left) / 3) * i);
+      }
+      laneXs = xs;
+      return { width, height, top, bottom, xs };
+    }
+
+    function generateRungs() {
+      const desired = clamp(parseInt(lineCountInput.value, 10) || 18, 5, 40);
+      lineCountInput.value = String(desired);
+      rungs = [];
+      const used = new Set();
+      const rows = Math.max(8, desired * 2);
+      let guard = 0;
+
+      while (rungs.length < desired && guard < desired * 30) {
+        guard += 1;
+        const row = 1 + Math.floor(Math.random() * rows);
+        const from = Math.floor(Math.random() * 3);
+        const key = `${row}:${from}`;
+        const leftNeighbor = `${row}:${from - 1}`;
+        const rightNeighbor = `${row}:${from + 1}`;
+        if (used.has(key) || used.has(leftNeighbor) || used.has(rightNeighbor)) continue;
+        used.add(key);
+        rungs.push({ row, from });
+      }
+
+      rungs.sort((a, b) => a.row - b.row || a.from - b.from);
+      currentWinner = null;
+      setWinner(null);
+      statusText.value = "生成済み";
+      drawBoard();
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function rungY(rung) {
+      const rows = Math.max(8, (parseInt(lineCountInput.value, 10) || 18) * 2);
+      const span = geometry.bottom - geometry.top;
+      return geometry.top + (span * rung.row) / (rows + 1);
+    }
+
+    function drawBoard(progressSegments = [], head = null) {
+      if (!geometry) return;
+      const { width, height, top, bottom, xs } = geometry;
+      ctx.clearRect(0, 0, width, height);
+      drawCinemaGlow(width, height);
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 18;
+      xs.forEach((x) => {
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+      });
+
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line");
+      ctx.lineWidth = 4;
+      xs.forEach((x) => {
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+      });
+
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line-soft");
+      ctx.lineWidth = 13;
+      rungs.forEach((rung) => {
+        const y = rungY(rung);
+        ctx.beginPath();
+        ctx.moveTo(xs[rung.from], y);
+        ctx.lineTo(xs[rung.from + 1], y);
+        ctx.stroke();
+      });
+
+      ctx.strokeStyle = "rgba(255,255,255,0.64)";
+      ctx.lineWidth = 4;
+      rungs.forEach((rung) => {
+        const y = rungY(rung);
+        ctx.beginPath();
+        ctx.moveTo(xs[rung.from], y);
+        ctx.lineTo(xs[rung.from + 1], y);
+        ctx.stroke();
+      });
+
+      progressSegments.forEach((segment) => drawNeonSegment(segment));
+      if (head) drawLaserHead(head.x, head.y);
+      ctx.restore();
+    }
+
+    function drawCinemaGlow(width, height) {
+      const gradient = ctx.createRadialGradient(width * 0.5, height * 0.1, 20, width * 0.5, height * 0.35, height * 0.8);
+      gradient.addColorStop(0, "rgba(86, 227, 255, 0.08)");
+      gradient.addColorStop(0.48, "rgba(168, 117, 255, 0.045)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    function drawNeonSegment(segment) {
+      const gradient = ctx.createLinearGradient(segment.x1, segment.y1, segment.x2, segment.y2);
+      gradient.addColorStop(0, "#56e3ff");
+      gradient.addColorStop(0.46, "#ffffff");
+      gradient.addColorStop(1, "#ffd36e");
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.shadowBlur = 24;
+      ctx.shadowColor = "#56e3ff";
+      ctx.strokeStyle = "rgba(86, 227, 255, 0.26)";
+      ctx.lineWidth = 18;
+      ctx.beginPath();
+      ctx.moveTo(segment.x1, segment.y1);
+      ctx.lineTo(segment.x2, segment.y2);
+      ctx.stroke();
+
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "#ffd36e";
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.moveTo(segment.x1, segment.y1);
+      ctx.lineTo(segment.x2, segment.y2);
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(segment.x1, segment.y1);
+      ctx.lineTo(segment.x2, segment.y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLaserHead(x, y) {
+      const pulse = 8 + Math.sin(Date.now() / 80) * 2;
+      const radial = ctx.createRadialGradient(x, y, 0, x, y, 26);
+      radial.addColorStop(0, "rgba(255,255,255,1)");
+      radial.addColorStop(0.22, "rgba(255,211,110,0.92)");
+      radial.addColorStop(1, "rgba(86,227,255,0)");
+      ctx.save();
+      ctx.fillStyle = radial;
+      ctx.beginPath();
+      ctx.arc(x, y, 30, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = "#ffd36e";
+      ctx.beginPath();
+      ctx.arc(x, y, pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function buildPath(startLane) {
+      const segments = [];
+      let lane = startLane;
+      let y = geometry.top;
+      const sorted = rungs.map((rung) => ({ ...rung, y: rungY(rung) })).sort((a, b) => a.y - b.y);
+
+      for (const rung of sorted) {
+        const connectsRight = rung.from === lane;
+        const connectsLeft = rung.from + 1 === lane;
+        if (!connectsRight && !connectsLeft) continue;
+
+        segments.push({ x1: laneXs[lane], y1: y, x2: laneXs[lane], y2: rung.y });
+        if (connectsRight) {
+          segments.push({ x1: laneXs[lane], y1: rung.y, x2: laneXs[lane + 1], y2: rung.y });
+          lane += 1;
+        } else {
+          segments.push({ x1: laneXs[lane], y1: rung.y, x2: laneXs[lane - 1], y2: rung.y });
+          lane -= 1;
+        }
+        y = rung.y;
+      }
+
+      segments.push({ x1: laneXs[lane], y1: y, x2: laneXs[lane], y2: geometry.bottom });
+      return { segments, winner: lane };
+    }
+
+    function segmentLength(segment) {
+      return Math.hypot(segment.x2 - segment.x1, segment.y2 - segment.y1);
+    }
+
+    function interpolate(segment, t) {
+      return {
+        x: segment.x1 + (segment.x2 - segment.x1) * t,
+        y: segment.y1 + (segment.y2 - segment.y1) * t
+      };
+    }
+
+    function startLottery() {
+      if (animating) return;
+      currentWinner = null;
+      setWinner(null);
+      const startLane = parseInt(startLaneSelect.value, 10);
+      updateStartLabels();
+      const path = buildPath(startLane);
+      const lengths = path.segments.map(segmentLength);
+      const total = lengths.reduce((sum, value) => sum + value, 0);
+      const duration = clamp(total * 4.6, 2600, 5200);
+      const completed = [];
+      animating = true;
+      setControls(false);
+      statusText.value = "上映中...";
+      let startTime = null;
+
+      function frame(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        let distance = Math.min(total, (elapsed / duration) * total);
+        completed.length = 0;
+        let head = null;
+
+        for (let i = 0; i < path.segments.length; i += 1) {
+          const segment = path.segments[i];
+          const length = lengths[i];
+          if (distance >= length) {
+            completed.push(segment);
+            distance -= length;
+          } else {
+            const t = length === 0 ? 1 : distance / length;
+            const point = interpolate(segment, t);
+            completed.push({ x1: segment.x1, y1: segment.y1, x2: point.x, y2: point.y });
+            head = point;
+            break;
+          }
+        }
+
+        drawBoard(completed, head);
+        if (elapsed < duration) {
+          requestAnimationFrame(frame);
+        } else {
+          animating = false;
+          currentWinner = path.winner;
+          setWinner(path.winner);
+          statusText.value = `${movies[path.winner].title} に決定`;
+          setControls(true);
+          celebrate(path.winner);
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function setControls(enabled) {
+      lineCountInput.disabled = !enabled;
+      startLaneSelect.disabled = !enabled;
+      generateBtn.disabled = !enabled;
+      startBtn.disabled = !enabled;
+    }
+
+    function setWinner(index) {
+      document.querySelectorAll(".movie-card").forEach((card) => {
+        card.classList.toggle("winner", index !== null && Number(card.dataset.index) === index);
+      });
+    }
+
+    function updateStartLabels() {
+      const selected = parseInt(startLaneSelect.value, 10);
+      [...startLabels.children].forEach((item, index) => {
+        item.classList.toggle("active", index === selected);
+      });
+    }
+
+    function celebrate(index) {
+      const movie = movies[index];
+      resultPoster.src = posterSvg(movie, index, true);
+      resultPoster.alt = `${movie.title}のパッケージ画像`;
+      resultTitle.textContent = movie.title;
+      resultLayer.classList.add("show");
+      burstSparks();
+    }
+
+    function burstSparks() {
+      const colors = ["#ffd36e", "#56e3ff", "#ff496d", "#a875ff", "#7dff9d"];
+      for (let i = 0; i < 44; i += 1) {
+        const spark = document.createElement("span");
+        spark.className = "spark";
+        spark.style.left = `${50 + (Math.random() - 0.5) * 16}vw`;
+        spark.style.top = `${48 + (Math.random() - 0.5) * 12}vh`;
+        spark.style.color = colors[i % colors.length];
+        spark.style.setProperty("--dx", `${(Math.random() - 0.5) * 520}px`);
+        spark.style.setProperty("--dy", `${(Math.random() - 0.5) * 420}px`);
+        document.body.appendChild(spark);
+        spark.addEventListener("animationend", () => spark.remove(), { once: true });
+      }
+    }
+
+    generateBtn.addEventListener("click", generateRungs);
+    startBtn.addEventListener("click", startLottery);
+    startLaneSelect.addEventListener("change", updateStartLabels);
+    lineCountInput.addEventListener("change", generateRungs);
+    closeResult.addEventListener("click", () => resultLayer.classList.remove("show"));
+    resultLayer.addEventListener("click", (event) => {
+      if (event.target === resultLayer) resultLayer.classList.remove("show");
+    });
+
+    window.addEventListener("resize", resizeCanvas);
+
+    setupCards();
+    generateRungs();
+    updateStartLabels();
+    resizeCanvas();
+  </script>
+</body>
+</html>
