@@ -473,7 +473,7 @@
     <section class="control-panel" aria-label="あみだくじ操作パネル">
       <label>
         横線の本数
-        <input id="lineCount" type="number" min="5" max="40" value="18" inputmode="numeric">
+        <input id="lineCount" type="number" min="5" max="100" value="18" inputmode="numeric">
       </label>
       <label>
         スタート位置
@@ -660,7 +660,7 @@
     }
 
     function generateRungs() {
-      const desired = clamp(parseInt(lineCountInput.value, 10) || 18, 5, 40);
+      const desired = clamp(parseInt(lineCountInput.value, 10) || 18, 5, 100);
       lineCountInput.value = String(desired);
       rungs = [];
       const used = new Set();
