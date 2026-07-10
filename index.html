@@ -336,7 +336,7 @@
 
     .result-card {
       position: relative;
-      width: min(520px, 90vw);
+      width: min(420px, 90vw);
       overflow: hidden;
       border: 1px solid rgba(255, 211, 110, 0.52);
       border-radius: 8px;
@@ -357,7 +357,7 @@
 
     .result-poster {
       width: 100%;
-      aspect-ratio: 16 / 10;
+      aspect-ratio: 5 / 7;
       object-fit: cover;
       display: block;
       filter: saturate(1.1) contrast(1.04);
@@ -519,21 +519,25 @@
     const movies = [
       {
         title: "ボディビルダー",
+        poster: "https://d2ueuvlup6lbue.cloudfront.net/variants/production/store/fitpad/520/728/a7qdlairqbmz7iiikc1s4mxbymog/_.jpg",
         colors: ["#f7c46c", "#b13c2d", "#29110d"],
         motif: "BODY"
       },
       {
         title: "ウェポンズ",
+        poster: "https://d2ueuvlup6lbue.cloudfront.net/variants/production/store/fitpad/520/728/sjk9caiao09ppe54jik4vc2pmqgc/_.jpg",
         colors: ["#6ee7ff", "#243d7e", "#080b15"],
         motif: "WEAPONS"
       },
       {
         title: "ザ・マミー",
+        poster: "https://d2ueuvlup6lbue.cloudfront.net/variants/production/store/fitpad/520/728/frfkcynhzwhnb3c1zccl4c2fkq07/_.jpg",
         colors: ["#e4c27d", "#7b4d2b", "#120b08"],
         motif: "MUMMY"
       },
       {
         title: "ノーバディ2",
+        poster: "https://d2ueuvlup6lbue.cloudfront.net/variants/production/store/fitpad/520/728/9b2cyl90gejd3g5g6a9gyc0miy6s/_.jpg",
         colors: ["#f65b76", "#3b2d72", "#090912"],
         motif: "NOBODY 2"
       }
@@ -625,8 +629,13 @@
 
         const img = document.createElement("img");
         img.className = "poster";
-        img.src = posterSvg(movie, index);
+        img.src = movie.poster || posterSvg(movie, index);
         img.alt = `${movie.title}のパッケージ画像`;
+        img.referrerPolicy = "no-referrer";
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = posterSvg(movie, index);
+        };
 
         const title = document.createElement("div");
         title.className = "movie-title";
@@ -928,8 +937,13 @@
 
     function celebrate(index) {
       const movie = movies[index];
-      resultPoster.src = posterSvg(movie, index, true);
+      resultPoster.src = movie.poster || posterSvg(movie, index, true);
       resultPoster.alt = `${movie.title}のパッケージ画像`;
+      resultPoster.referrerPolicy = "no-referrer";
+      resultPoster.onerror = () => {
+        resultPoster.onerror = null;
+        resultPoster.src = posterSvg(movie, index, true);
+      };
       resultTitle.textContent = movie.title;
       resultLayer.classList.add("show");
       burstSparks();
